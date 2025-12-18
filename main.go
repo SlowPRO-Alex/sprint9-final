@@ -20,7 +20,6 @@ func generateRandomElements(size int) []int {
 	}
 	s := make([]int, size)
 	for i := 0; i < size; i++ {
-		rand.Seed(time.Now().UnixNano())
 		s[i] = rand.Intn(SIZE)
 	}
 	return s
@@ -45,26 +44,26 @@ func maximum(data []int) int {
 func maxChunks(data []int) int {
 	// ваш код здесь
 	var wg sync.WaitGroup
-	switch {
-	case len(data) == 0:
+	if len(data) == 0 {
 		return 0
-	case len(data)%CHUNKS != 0:
-		{
-			j := float64(CHUNKS) - float64(len(data)%CHUNKS)/(1/float64(CHUNKS))
-			for j > 0 {
-				data = append(data, 0)
-				j--
-			}
+	}
+	if len(data)%CHUNKS != 0 {
+		j := float64(CHUNKS) - float64(len(data)%CHUNKS)/(1/float64(CHUNKS))
+		for j > 0 {
+			data = append(data, 0)
+			j--
 		}
 	}
 	result := make([]int, CHUNKS)
 	for i := 0; i < CHUNKS; i++ {
 		wg.Add(1)
-		go func(ch []int) {
+		go func(i int, ch []int) {
 			// уменьшаем счётчик, когда горутина завершает работу
 			defer wg.Done()
-			result = append(result, maximum(data[len(data)/CHUNKS*i:len(data)/CHUNKS*i+len(data)/CHUNKS]))
-		}(data)
+			from := len(data) / CHUNKS * i
+			to := from + len(data)/CHUNKS
+			result[i] = maximum(data[from:to])
+		}(i, data)
 	}
 	wg.Wait()
 	return maximum(result)
